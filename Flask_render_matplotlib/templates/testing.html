@@ -1,0 +1,119 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>CSV Downloader</title>
+</head>
+<body>
+	
+	<!--<div id="dvMap" style="width: 300px; height: 300px">-->
+    <!--<div id="dvMap" style="width: 300px; height: 500px;bottom:-45px;">-->
+    <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
+    <div style="text-align: center; color:red; font-size:25px;">CO2 PPM  /  TEMPRATURE  /  HUMIDITY PLOTTING<b></b></div>
+    <script type="text/javascript" src="smoothie.js"></script>
+    <canvas id="mycanvas" width="900" height="300"></canvas>
+    
+    <script type="text/javascript">
+    $(function () { 
+	var line1 = new TimeSeries();
+        var line2 = new TimeSeries();
+        var line3 = new TimeSeries();
+        var smoothie = new SmoothieChart({
+  	grid: { strokeStyle:'rgb(125, 0, 0)', fillStyle:'rgb(60, 0, 0)',
+          lineWidth: 1, millisPerLine: 250, verticalSections: 6, },
+  	labels: { fillStyle:'rgb(60, 0, 0)' }
+	});
+	   var smoothie = new SmoothieChart();
+        smoothie.streamTo(document.getElementById("mycanvas"));
+        $("#upload").bind("click", function () {
+            var regex = /^([a-zA-Z0-9\s_\\.\-:])+(.csv)$/;
+            var localCSVfile = "\home\abrahamjroy\django-graphos\Test\temp.csv";
+
+	setInterval(function() {
+  //
+	            var test1 = false;
+            if (regex.test(localCSVfile.toLowerCase())) {
+                test1 = true;
+                if (typeof (FileReader) != "undefined") {
+                    var reader = new FileReader();
+                    reader.onload = function (e) {
+                        var table = $("<table />");
+                        var rows = e.target.result.split("\n");
+
+                    for (var i = 1; i < rows.length; i++) {
+                        var row = $("<tr />");
+                        var cells = rows[i].split(",");
+			//alert("dddd  "+cells[0]);
+                        for (var j = 0; j < cells.length; j++) {
+                            var cell = $("<td />");
+			      line1.append(new Date().getTime(), cells[j]);
+  			      line2.append(new Date().getTime(), cells[j+1]);
+                              line3.append(new Date().getTime(), cells[j+2]);
+                            cell.html(cells[j]);
+                            row.append(cell);
+
+                        }
+			smoothie.streamTo(document.getElementById("mycanvas"), 1000 /*delay*/); 
+                        smoothie.addTimeSeries(line1,{ strokeStyle:'rgb(0, 255, 0)', fillStyle:'rgba(0, 255, 0, 0.4)', lineWidth:3 });
+                        smoothie.addTimeSeries(line2,{ strokeStyle:'rgb(255, 0, 255)', fillStyle:'rgba(255, 0, 255, 0.3)', lineWidth:3 });
+                        smoothie.addTimeSeries(line3);
+                        table.append(row);
+                    }
+
+                    $("#dvCSV").html('');
+                    $("#dvCSV").append(table);
+
+                }
+                reader.readAsText($("#fileUpload")[0].files[0]);
+            } else {
+                alert("This browser does not support HTML5.");
+            }
+        } else {
+            alert("Please upload a valid CSV file.");
+        }
+	
+}, 500);
+    });
+});
+</script>
+<div id="dvMap" style="width: 300px; height: 200px;bottom:-1px;left:1000px;">
+<script type="text/javascript" src="http://maps.googleapis.com/maps/api/js?sensor=false"></script>
+	<script type="text/javascript">
+	if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(function (p) {
+        var LatLng = new google.maps.LatLng(p.coords.latitude, p.coords.longitude);
+        var mapOptions = {
+            center: LatLng,
+            zoom: 13,
+            mapTypeId: google.maps.MapTypeId.ROADMAP
+        };
+        var map = new google.maps.Map(document.getElementById("dvMap"), mapOptions);
+        var marker = new google.maps.Marker({
+            position: LatLng,
+            map: map,
+            title: "<div style = 'height:60px;width:200px'><b>Your location:</b><br />Latitude: " + p.coords.latitude + "<br />Longitude: " + p.coords.longitude
+        });
+        google.maps.event.addListener(marker, "click", function (e) {
+            var infoWindow = new google.maps.InfoWindow();
+            infoWindow.setContent(marker.title);
+            infoWindow.open(map, marker);
+        });
+    });
+	} else {
+    alert('Geo Location feature is not supported in this browser.');
+	}
+	</script>
+</div><!--div map-->
+<div>
+<input type="file" id="fileUpload" />
+<input type="button" id="upload" value="Upload" />
+</div>
+<!--<hr />-->
+<br>
+
+
+
+<!--<div id="dvCSV">
+</div>-->
+</body>
+</html>
